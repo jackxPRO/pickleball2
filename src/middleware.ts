@@ -7,7 +7,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Run on everything except static assets & images.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Only run auth session refresh + guards on routes that need it.
+    // Public pages (home, gallery, #anchor links) skip the Supabase call
+    // entirely, so navigation there is instant.
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/login",
+    "/register",
   ],
 };
