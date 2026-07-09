@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand palette — overridable by the CMS at runtime via inline styles.
+     Values are space-separated RGB channels for Tailwind's <alpha-value>. */
+  --color-primary: 15 77 46; /* Dark green  #0f4d2e */
+  --color-primary-light: 31 122 77; /* #1f7a4d */
+  --color-primary-dark: 8 46 27; /* #082e1b */
+  --color-secondary: 212 175 55; /* Gold #d4af37 */
+  --color-secondary-light: 232 205 106;
+  --color-secondary-dark: 168 137 40;
+  --color-accent: 31 122 77;
+
+  --glass-opacity: 0.1;
+  --overlay-opacity: 0.55;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Poppins", system-ui, sans-serif;
+}
+
+* {
+  border-color: rgb(255 255 255 / 0.08);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-black text-white antialiased;
+  background-image: radial-gradient(
+      circle at 15% 15%,
+      rgb(var(--color-primary) / 0.25),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 85% 0%,
+      rgb(var(--color-secondary) / 0.08),
+      transparent 40%
+    );
+  background-attachment: fixed;
+}
+
+/* ---- Reusable utility classes -------------------------------------------- */
+@layer components {
+  .glass {
+    @apply border border-white/10 bg-white/5 backdrop-blur-xl;
+    background-color: rgb(255 255 255 / var(--glass-opacity));
+  }
+
+  .glass-dark {
+    @apply border border-white/10 backdrop-blur-xl;
+    background-color: rgb(0 0 0 / 0.4);
+  }
+
+  .card {
+    @apply glass rounded-2xl shadow-card;
+  }
+
+  .gold-text {
+    @apply bg-gradient-to-r from-secondary-light via-secondary to-secondary-dark bg-clip-text text-transparent;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary/50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-br from-primary-light to-primary text-white shadow-lg hover:shadow-glow hover:brightness-110;
+  }
+
+  .btn-gold {
+    @apply btn bg-gradient-to-br from-secondary-light to-secondary-dark text-black shadow-lg hover:brightness-110;
+  }
+
+  .btn-outline {
+    @apply btn border border-white/20 bg-white/5 text-white hover:bg-white/10;
+  }
+
+  .btn-ghost {
+    @apply btn text-white/80 hover:bg-white/5 hover:text-white;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-white/40 transition focus:border-secondary/60 focus:outline-none focus:ring-1 focus:ring-secondary/40;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-white/80;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-white/5;
+  }
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent;
+    content: "";
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-white/10;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-white/20;
+}
