@@ -193,30 +193,52 @@ export function TopupClient({
           <p className="mb-2 text-xs text-white/50">
             Preview — make sure your receipt is clear and readable.
           </p>
-          <div className="relative w-fit">
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="group relative block"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt="Receipt preview"
-                className="h-32 w-32 rounded-lg border border-white/10 object-cover"
-              />
-              <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 text-white/0 transition group-hover:bg-black/40 group-hover:text-white">
-                <Eye className="h-5 w-5" />
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFile(null)}
-              className="absolute -right-2 -top-2 rounded-full bg-black/80 p-1 text-white/80 hover:text-white"
-              aria-label="Remove receipt"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                className="group relative block"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewUrl}
+                  alt="Receipt preview"
+                  className="h-24 w-24 rounded-lg border border-white/10 object-cover sm:h-32 sm:w-32"
+                />
+                <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30 text-white/90 transition sm:bg-black/0 sm:text-white/0 sm:group-hover:bg-black/40 sm:group-hover:text-white">
+                  <Eye className="h-5 w-5" />
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFile(null)}
+                className="absolute -right-2 -top-2 rounded-full bg-black/80 p-1.5 text-white/80 hover:text-white"
+                aria-label="Remove receipt"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="flex flex-1 flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowPreview(true)}
+              >
+                <Eye className="h-4 w-4" /> View full size
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => setFile(null)}
+              >
+                <X className="h-4 w-4" /> Remove
+              </Button>
+            </div>
           </div>
         </div>
       )}
