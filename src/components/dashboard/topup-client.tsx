@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Eye, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { walletRepository } from "@/lib/repositories/wallet.repository";
 import { TOPUP_PRESETS } from "@/lib/constants";
@@ -11,6 +11,7 @@ import { cn, formatCurrency, getErrorMessage } from "@/lib/utils";
 import type { PaymentMethod } from "@/types/database";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 
 export function TopupClient({
   methods = [],
@@ -26,9 +27,21 @@ export function TopupClient({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [methodId, setMethodId] = useState<string>(methods[0]?.id ?? "");
+  const [showPreview, setShowPreview] = useState(false);
 
   const finalAmount = custom ? Number(custom) : amount;
   const method = methods.find((m) => m.id === methodId);
+
+  // Local object URL so the user can preview the receipt they selected.
+  const previewUrl = useMemo(
+    () => (file ? URL.createObjectURL(file) : null),
+    [file]
+  );
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   async function handleSubmit() {
     if (!finalAmount || finalAmount < 50) {
@@ -175,6 +188,39 @@ export function TopupClient({
         />
       </label>
 
+      {previewUrl && (
+        <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <p className="mb-2 text-xs text-white/50">
+            Preview — make sure your receipt is clear and readable.
+          </p>
+          <div className="relative w-fit">
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="group relative block"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="Receipt preview"
+                className="h-32 w-32 rounded-lg border border-white/10 object-cover"
+              />
+              <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 text-white/0 transition group-hover:bg-black/40 group-hover:text-white">
+                <Eye className="h-5 w-5" />
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFile(null)}
+              className="absolute -right-2 -top-2 rounded-full bg-black/80 p-1 text-white/80 hover:text-white"
+              aria-label="Remove receipt"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <Button
         variant="gold"
         className="mt-4 w-full"
@@ -184,6 +230,22 @@ export function TopupClient({
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         Submit {formatCurrency(finalAmount || 0, currency)}
       </Button>
+
+      {/* Full-size receipt preview */}
+      <Modal
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        title="Receipt preview"
+      >
+        {previewUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewUrl}
+            alt="Receipt preview"
+            className="w-full rounded-xl object-contain"
+          />
+        )}
+      </Modal>
     </Card>
   );
 }
