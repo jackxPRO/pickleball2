@@ -7,15 +7,13 @@ import { UsersManager } from "@/components/admin/users-manager";
 export default async function AdminUsersPage() {
   await requireAdmin();
   const supabase = await createClient();
-  const [users, settings, adminRows] = await Promise.all([
+  const [users, settings, adminRes] = await Promise.all([
     userRepository.list(supabase).catch(() => []),
     settingsRepository.getWebsiteSettings(supabase).catch(() => null),
-    supabase
-      .from("admins")
-      .select("auth_id, email")
-      .then((r) => r.data ?? [])
-      .catch(() => []),
+    supabase.from("admins").select("auth_id, email"),
   ]);
+
+  const adminRows = adminRes.data ?? [];
 
   // Identify which customer accounts are also admins so they can't be disabled.
   const adminAuthIds = adminRows
