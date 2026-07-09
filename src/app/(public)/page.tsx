@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { settingsRepository } from "@/lib/repositories/settings.repository";
 import { courtRepository } from "@/lib/repositories/court.repository";
 import { contentRepository } from "@/lib/repositories/content.repository";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { Hero } from "@/components/public/home/hero";
 import { Reveal } from "@/components/public/home/reveal";
 import { PromoHighlights } from "@/components/promo-highlights";
@@ -213,23 +213,79 @@ export default async function HomePage() {
         </Reveal>
         <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
           {(pricing.length
-            ? pricing
-            : [
-                { id: "1", name: "Day Rate (7AM–4PM)", rate: 150 },
-                { id: "2", name: "Night Rate (4PM–12MN)", rate: 200 },
-              ]
-          ).map((p) => (
-            <Reveal key={p.id} className="card p-8 text-center">
-              <Star className="mx-auto h-8 w-8 text-secondary" />
-              <h3 className="mt-3 font-display text-lg font-semibold text-white">
-                {p.name}
-              </h3>
-              <p className="mt-3 font-display text-4xl font-extrabold gold-text">
-                {formatCurrency(p.rate, currency)}
-              </p>
-              <p className="mt-1 text-sm text-white/50">per court, per hour</p>
-            </Reveal>
-          ))}
+            ? (pricing as PricingRule[])
+            : ([
+                {
+                  id: "1",
+                  name: "Day Rate (7AM–4PM)",
+                  rate: 150,
+                  rule_type: "STANDARD",
+                  start_time: null,
+                  end_time: null,
+                  discount_pct: 0,
+                  start_date: null,
+                  end_date: null,
+                  active: true,
+                  created_at: "",
+                },
+                {
+                  id: "2",
+                  name: "Night Rate (4PM–12MN)",
+                  rate: 200,
+                  rule_type: "STANDARD",
+                  start_time: null,
+                  end_time: null,
+                  discount_pct: 0,
+                  start_date: null,
+                  end_date: null,
+                  active: true,
+                  created_at: "",
+                },
+              ] as PricingRule[])
+          ).map((p) => {
+            const isPromo = p.rule_type === "PROMO";
+            const discounted =
+              p.discount_pct != null && Number(p.discount_pct) > 0;
+            const effective =
+              Number(p.rate) * (1 - Number(p.discount_pct ?? 0) / 100);
+            return (
+              <Reveal
+                key={p.id}
+                className={
+                  isPromo
+                    ? "card border-secondary/40 p-8 text-center"
+                    : "card p-8 text-center"
+                }
+              >
+                {isPromo && (
+                  <span className="mx-auto mb-2 block w-fit rounded-full bg-secondary px-3 py-0.5 text-[11px] font-bold text-black">
+                    PROMO{discounted ? ` · -${Number(p.discount_pct)}%` : ""}
+                  </span>
+                )}
+                <Star className="mx-auto h-8 w-8 text-secondary" />
+                <h3 className="mt-3 font-display text-lg font-semibold text-white">
+                  {p.name}
+                </h3>
+                <p className="mt-3 font-display text-4xl font-extrabold gold-text">
+                  {formatCurrency(isPromo ? effective : p.rate, currency)}
+                </p>
+                <p className="mt-1 text-sm text-white/50">per court, per hour</p>
+                {p.start_time && p.end_time && (
+                  <p className="mt-3 text-xs text-white/60">
+                    {formatTime(p.start_time)} – {formatTime(p.end_time)}
+                  </p>
+                )}
+                {p.start_date && (
+                  <p className="mt-1 text-xs font-semibold text-secondary">
+                    {formatDate(p.start_date)}
+                    {p.end_date && p.end_date !== p.start_date
+                      ? ` – ${formatDate(p.end_date)}`
+                      : ""}
+                  </p>
+                )}
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 
