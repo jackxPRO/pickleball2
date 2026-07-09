@@ -18,6 +18,8 @@ import { contentRepository } from "@/lib/repositories/content.repository";
 import { formatCurrency } from "@/lib/utils";
 import { Hero } from "@/components/public/home/hero";
 import { Reveal } from "@/components/public/home/reveal";
+import { PromoHighlights } from "@/components/promo-highlights";
+import type { PricingRule } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +62,21 @@ export default async function HomePage() {
         mapsLink={settings?.maps_link}
         locationLabel={settings?.address ?? "Kiblawan, Davao del Sur"}
       />
+
+      {/* Promotions */}
+      {(pricing as PricingRule[]).some(
+        (p) => p.rule_type === "PROMO" && p.active !== false
+      ) && (
+        <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
+          <Reveal>
+            <PromoHighlights
+              promos={pricing as PricingRule[]}
+              currency={currency}
+              title="Ongoing promotions"
+            />
+          </Reveal>
+        </section>
+      )}
 
       {/* Announcements */}
       {announcements.length > 0 && (

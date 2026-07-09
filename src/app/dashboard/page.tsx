@@ -16,18 +16,22 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PromoHighlights } from "@/components/promo-highlights";
 import { BOOKING_STATUS_STYLES, TX_TYPE_STYLES } from "@/lib/constants";
+import type { PricingRule } from "@/types/database";
 
 export default async function DashboardHome() {
   const user = await requireUser();
   const supabase = await createClient();
-  const [bookings, transactions, settings] = await Promise.all([
+  const [bookings, transactions, settings, pricingRes] = await Promise.all([
     bookingRepository.listForUser(supabase, user.id).catch(() => []),
     walletRepository.transactions(supabase, user.id, 5).catch(() => []),
     settingsRepository.getWebsiteSettings(supabase).catch(() => null),
+    supabase.from("pricing_rules").select("*").eq("active", true),
   ]);
 
   const currency = settings?.currency ?? "PHP";
+  const promos = (pricingRes.data ?? []) as PricingRule[];
   const today = todayISO();
   const upcoming = bookings.filter(
     (b) => b.booking_date >= today && b.booking_status === "CONFIRMED"
@@ -42,6 +46,8 @@ export default async function DashboardHome() {
         </h1>
         <p className="text-white/60">Here&apos;s your activity at a glance.</p>
       </div>
+
+      <PromoHighlights promos={promos} currency={currency} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
