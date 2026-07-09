@@ -12,6 +12,7 @@ import {
   buildHourlySlots,
   cn,
   formatCurrency,
+  formatDate,
   formatTime,
   getErrorMessage,
   todayISO,
@@ -20,13 +21,44 @@ import type { Court, PricingRule } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+/** Effective (discounted) hourly rate for a pricing rule. */
+function ruleEffectiveRate(r: PricingRule) {
+  const disc = Number(r.discount_pct ?? 0);
+  return Number(r.rate) * (1 - disc / 100);
+}
+
+/** Whether a pricing rule's optional date window includes the given date. */
+function ruleMatchesDate(r: PricingRule, date: string) {
+  if (r.start_date && date < r.start_date) return false;
+  if (r.end_date && date > r.end_date) return false;
+  return true;
+}
+
 /** Client-side rate estimate mirroring the DB resolve_rate function. */
-function estimateRate(pricing: PricingRule[], slot: string, base: number) {
-  const rule = pricing.find(
+function estimateRate(
+  pricing: PricingRule[],
+  slot: string,
+  base: number,
+  date: string
+) {
+  const candidates = pricing.filter(
     (p) =>
-      p.start_time && p.end_time && slot >= p.start_time && slot < p.end_time
+      p.active !== false &&
+      p.start_time &&
+      p.end_time &&
+      slot >= p.start_time &&
+      slot < p.end_time &&
+      ruleMatchesDate(p, date)
   );
-  if (rule) return Number(rule.rate);
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => {
+      const aDated = a.start_date || a.end_date ? 1 : 0;
+      const bDated = b.start_date || b.end_date ? 1 : 0;
+      if (aDated !== bDated) return bDated - aDated; // scheduled promos win
+      return ruleEffectiveRate(a) - ruleEffectiveRate(b); // cheapest for user
+    });
+    return ruleEffectiveRate(candidates[0]);
+  }
   const hour = Number(slot.split(":")[0]);
   return hour >= 16 ? 200 : base || 150;
 }
@@ -126,9 +158,11 @@ export function BookingClient({
 
   const total = useMemo(() => {
     let sum = 0;
-    selected.forEach((s) => (sum += estimateRate(pricing, `${s}:00`, court?.hourly_rate ?? 150)));
+    selected.forEach(
+      (s) => (sum += estimateRate(pricing, `${s}:00`, court?.hourly_rate ?? 150, date))
+    );
     return sum;
-  }, [selected, pricing, court]);
+  }, [selected, pricing, court, date]);
 
   const remaining = walletBalance - total;
   const insufficient = total > walletBalance;
@@ -181,33 +215,65 @@ export function BookingClient({
               </h3>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {promos.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-xl border border-white/10 bg-white/5 p-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-white">{p.name}</p>
-                    {p.discount_pct ? (
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-bold text-black">
-                        -{Number(p.discount_pct)}%
+              {promos.map((p) => {
+                const appliesToday = ruleMatchesDate(p, date);
+                const effective = ruleEffectiveRate(p);
+                const discounted =
+                  p.discount_pct != null && Number(p.discount_pct) > 0;
+                return (
+                  <div
+                    key={p.id}
+                    className={cn(
+                      "rounded-xl border p-3",
+                      appliesToday
+                        ? "border-secondary/50 bg-white/10"
+                        : "border-white/10 bg-white/5"
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-white">{p.name}</p>
+                      {discounted ? (
+                        <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-bold text-black">
+                          -{Number(p.discount_pct)}%
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-xs text-white/60">
+                      <span>
+                        {p.start_time && p.end_time
+                          ? `${formatTime(p.start_time)} – ${formatTime(
+                              p.end_time
+                            )}`
+                          : "All day"}
                       </span>
-                    ) : null}
+                      <span className="flex items-center gap-1.5">
+                        {discounted && (
+                          <span className="text-white/40 line-through">
+                            {formatCurrency(Number(p.rate), currency)}
+                          </span>
+                        )}
+                        <span className="font-semibold text-secondary">
+                          {formatCurrency(effective, currency)}/hr
+                        </span>
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-white/40">
+                      {p.start_date
+                        ? `${formatDate(p.start_date)}${
+                            p.end_date && p.end_date !== p.start_date
+                              ? ` – ${formatDate(p.end_date)}`
+                              : ""
+                          }`
+                        : "Every day"}
+                      {appliesToday && (
+                        <span className="ml-1 font-semibold text-secondary">
+                          · applies to selected date
+                        </span>
+                      )}
+                    </p>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-white/60">
-                    <span>
-                      {p.start_time && p.end_time
-                        ? `${formatTime(p.start_time)} – ${formatTime(
-                            p.end_time
-                          )}`
-                        : "All day"}
-                    </span>
-                    <span className="font-semibold text-secondary">
-                      {formatCurrency(Number(p.rate), currency)}/hr
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

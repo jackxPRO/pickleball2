@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getErrorMessage } from "@/lib/utils";
+import { formatDate, getErrorMessage } from "@/lib/utils";
 import type { PricingRule } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ export function PricingManager({ rules }: { rules: PricingRule[] }) {
     end_time: "16:00",
     rate: "150",
     discount_pct: "0",
+    start_date: "",
+    end_date: "",
   });
   const [busy, setBusy] = useState(false);
 
@@ -40,6 +42,8 @@ export function PricingManager({ rules }: { rules: PricingRule[] }) {
         end_time: form.end_time || null,
         rate: Number(form.rate),
         discount_pct: Number(form.discount_pct) || 0,
+        start_date: form.start_date || null,
+        end_date: form.end_date || form.start_date || null,
         active: true,
       });
       if (error) throw error;
@@ -116,7 +120,23 @@ export function PricingManager({ rules }: { rules: PricingRule[] }) {
             value={form.discount_pct}
             onChange={(e) => setForm({ ...form, discount_pct: e.target.value })}
           />
+          <Input
+            label="Promo start date"
+            type="date"
+            value={form.start_date}
+            onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+          />
+          <Input
+            label="Promo end date"
+            type="date"
+            value={form.end_date}
+            onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+          />
         </div>
+        <p className="mt-2 text-xs text-white/40">
+          Leave the dates empty for an always-on rule. Set a start date (and
+          optional end date) to schedule a promo customers can book on.
+        </p>
         <Button variant="gold" className="mt-4" onClick={add} loading={busy}>
           <Plus className="h-4 w-4" /> Add rule
         </Button>
@@ -129,6 +149,7 @@ export function PricingManager({ rules }: { rules: PricingRule[] }) {
               <th className="p-4 font-medium">Name</th>
               <th className="p-4 font-medium">Type</th>
               <th className="p-4 font-medium">Window</th>
+              <th className="p-4 font-medium">Dates</th>
               <th className="p-4 text-right font-medium">Rate</th>
               <th className="p-4 font-medium">Active</th>
               <th className="p-4 text-right font-medium"></th>
@@ -141,6 +162,15 @@ export function PricingManager({ rules }: { rules: PricingRule[] }) {
                 <td className="p-4 text-white/60">{r.rule_type}</td>
                 <td className="p-4 text-white/60">
                   {r.start_time?.slice(0, 5)} – {r.end_time?.slice(0, 5)}
+                </td>
+                <td className="p-4 text-white/60">
+                  {r.start_date
+                    ? `${formatDate(r.start_date)}${
+                        r.end_date && r.end_date !== r.start_date
+                          ? ` – ${formatDate(r.end_date)}`
+                          : ""
+                      }`
+                    : "—"}
                 </td>
                 <td className="p-4 text-right text-white">₱{r.rate}</td>
                 <td className="p-4">

@@ -70,6 +70,8 @@ export interface PricingRule {
   end_time: string | null;
   rate: number;
   discount_pct: number | null;
+  start_date: string | null;
+  end_date: string | null;
   active: boolean;
   created_at: string;
 }
