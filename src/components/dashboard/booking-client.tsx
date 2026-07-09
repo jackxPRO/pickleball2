@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { AlertTriangle, CalendarDays, Check, Loader2, Lock } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, Loader2, Lock, Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { bookingRepository } from "@/lib/repositories/booking.repository";
 import { courtRepository } from "@/lib/repositories/court.repository";
@@ -60,6 +60,12 @@ export function BookingClient({
     [openHour, closeHour]
   );
   const court = courts.find((c) => c.id === courtId);
+
+  // Active promotional pricing rules, surfaced to the customer.
+  const promos = useMemo(
+    () => pricing.filter((p) => p.rule_type === "PROMO" && p.active !== false),
+    [pricing]
+  );
 
   // Keep a ref of the current selection so background refreshes can prune
   // slots that were just booked by someone else without stale closures.
@@ -166,6 +172,46 @@ export function BookingClient({
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
+        {promos.length > 0 && (
+          <div className="rounded-2xl border border-secondary/30 bg-secondary/10 p-4">
+            <div className="flex items-center gap-2 text-secondary">
+              <Tag className="h-4 w-4" />
+              <h3 className="font-display text-sm font-semibold">
+                Active promotions
+              </h3>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {promos.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-white/10 bg-white/5 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-white">{p.name}</p>
+                    {p.discount_pct ? (
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-bold text-black">
+                        -{Number(p.discount_pct)}%
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-xs text-white/60">
+                    <span>
+                      {p.start_time && p.end_time
+                        ? `${formatTime(p.start_time)} – ${formatTime(
+                            p.end_time
+                          )}`
+                        : "All day"}
+                    </span>
+                    <span className="font-semibold text-secondary">
+                      {formatCurrency(Number(p.rate), currency)}/hr
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <Card>
           <label className="label">Select date</label>
           <div className="relative">
