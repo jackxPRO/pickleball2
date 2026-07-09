@@ -109,8 +109,23 @@ export default async function HomePage() {
 
       {/* About */}
       {/* About */}
-      <section id="about" className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
+      <section id="about" className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        {settings?.about_background && (
+          <div
+            aria-hidden
+            className="absolute inset-0 overflow-hidden rounded-3xl"
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${settings.about_background})` }}
+            />
+            <div
+              className="absolute inset-0 bg-black"
+              style={{ opacity: settings?.overlay_opacity ?? 0.6 }}
+            />
+          </div>
+        )}
+        <div className="relative z-10 grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
             <span className="badge border-secondary/30 bg-secondary/10 text-secondary">
               About Us
@@ -202,8 +217,23 @@ export default async function HomePage() {
       </section>
 
       {/* Get In Touch */}
-      <section id="contact" className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-        <Reveal className="mb-10 text-center">
+      <section id="contact" className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        {settings?.contact_background && (
+          <div
+            aria-hidden
+            className="absolute inset-0 overflow-hidden rounded-3xl"
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${settings.contact_background})` }}
+            />
+            <div
+              className="absolute inset-0 bg-black"
+              style={{ opacity: settings?.overlay_opacity ?? 0.6 }}
+            />
+          </div>
+        )}
+        <Reveal className="relative z-10 mb-10 text-center">
           <h2 className="font-display text-4xl font-bold text-white">
             Get In Touch
           </h2>
@@ -212,7 +242,7 @@ export default async function HomePage() {
           </p>
         </Reveal>
 
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="relative z-10 grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
             <Reveal className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
               <span className="rounded-xl bg-secondary/15 p-3">

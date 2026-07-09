@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { settingsRepository } from "@/lib/repositories/settings.repository";
+import { AuthBackground } from "@/components/public/auth-background";
 
 export default async function AuthLayout({
   children,
@@ -12,20 +13,14 @@ export default async function AuthLayout({
     .getWebsiteSettings(supabase)
     .catch(() => null);
 
-  const bg = settings?.login_background || null;
   const logo = settings?.login_logo || settings?.logo || null;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
-      {bg && (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${bg})` }}
-        />
-      )}
-      <div
-        className="absolute inset-0"
-        style={{ backgroundColor: `rgba(0,0,0,${settings?.overlay_opacity ?? 0.6})` }}
+      <AuthBackground
+        loginBackground={settings?.login_background || null}
+        registerBackground={settings?.register_background || null}
+        overlay={settings?.overlay_opacity ?? 0.6}
       />
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 text-center">

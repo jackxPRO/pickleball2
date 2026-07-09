@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Brand } from "@/components/public/brand";
+import { PageBackground } from "@/components/ui/page-background";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -31,6 +32,10 @@ export function DashboardShell({
   currency,
   logo,
   businessName,
+  dashboardBackground,
+  bookingBackground,
+  walletBackground,
+  overlay = 0.6,
 }: {
   children: React.ReactNode;
   name: string;
@@ -38,9 +43,19 @@ export function DashboardShell({
   currency: string;
   logo?: string | null;
   businessName: string;
+  dashboardBackground?: string | null;
+  bookingBackground?: string | null;
+  walletBackground?: string | null;
+  overlay?: number;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  const background = pathname.startsWith("/dashboard/book")
+    ? bookingBackground || dashboardBackground
+    : pathname.startsWith("/dashboard/wallet")
+    ? walletBackground || dashboardBackground
+    : dashboardBackground;
 
   const SidebarContent = (
     <>
@@ -99,6 +114,7 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen">
+      <PageBackground image={background} overlay={overlay} />
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-white/10 bg-black/40 p-5 backdrop-blur-xl lg:flex">
         {SidebarContent}

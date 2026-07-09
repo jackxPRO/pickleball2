@@ -21,6 +21,10 @@ export default async function DashboardLayout({
       currency={settings?.currency ?? "PHP"}
       logo={settings?.dashboard_logo || settings?.logo || null}
       businessName={settings?.business_name ?? "5 Point Pickleball"}
+      dashboardBackground={settings?.dashboard_background || null}
+      bookingBackground={settings?.booking_background || null}
+      walletBackground={settings?.wallet_background || null}
+      overlay={settings?.overlay_opacity ?? 0.6}
     >
       {children}
     </DashboardShell>
