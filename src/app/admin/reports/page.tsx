@@ -8,6 +8,7 @@ import { ReportsClient } from "@/components/admin/reports-client";
 export default async function AdminReportsPage() {
   await requireAdmin();
   const supabase = await createClient();
+  await bookingRepository.completePast(supabase).catch(() => {});
   const [bookings, topups, settings] = await Promise.all([
     bookingRepository.listAll(supabase).catch(() => []),
     walletRepository.allTopups(supabase).catch(() => []),

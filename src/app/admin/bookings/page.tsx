@@ -7,6 +7,7 @@ import { BookingsManager } from "@/components/admin/bookings-manager";
 export default async function AdminBookingsPage() {
   await requireAdmin();
   const supabase = await createClient();
+  await bookingRepository.completePast(supabase).catch(() => {});
   const [bookings, settings] = await Promise.all([
     bookingRepository.listAll(supabase).catch(() => []),
     settingsRepository.getWebsiteSettings(supabase).catch(() => null),

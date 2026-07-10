@@ -93,4 +93,29 @@ export const bookingRepository = {
       .eq("id", id);
     if (error) throw error;
   },
+
+  /** Mark all CONFIRMED bookings whose schedule has already passed as COMPLETED. */
+  async completePast(supabase: SupabaseClient): Promise<void> {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    const today = local.toISOString().slice(0, 10);
+    const time = local.toISOString().slice(11, 19);
+
+    // Bookings on days before today.
+    const { error: pastError } = await supabase
+      .from("bookings")
+      .update({ booking_status: "COMPLETED" })
+      .eq("booking_status", "CONFIRMED")
+      .lt("booking_date", today);
+    if (pastError) throw pastError;
+
+    // Bookings today whose end time has already passed.
+    const { error: todayError } = await supabase
+      .from("bookings")
+      .update({ booking_status: "COMPLETED" })
+      .eq("booking_status", "CONFIRMED")
+      .eq("booking_date", today)
+      .lte("end_time", time);
+    if (todayError) throw todayError;
+  },
 };
