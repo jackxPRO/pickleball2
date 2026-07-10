@@ -1,4 +1,5 @@
-import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getCurrentAdmin, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { settingsRepository } from "@/lib/repositories/settings.repository";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -8,6 +9,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Admins are not customers — they have no wallet and should never see the
+  // customer dashboard. Send them to the admin panel instead.
+  const admin = await getCurrentAdmin();
+  if (admin) redirect("/admin");
+
   const user = await requireUser();
   const supabase = await createClient();
   const settings = await settingsRepository
