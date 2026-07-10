@@ -101,7 +101,7 @@ export interface PaymentSettings {
   updated_at: string;
 }
 
-export type PaymentMethodType = "GCASH" | "MAYA" | "BANK" | "INSTAPAY";
+export type PaymentMethodType = string;
 
 export interface PaymentMethod {
   id: string;
