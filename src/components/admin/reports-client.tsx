@@ -8,13 +8,14 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 
-type Period = "day" | "week" | "month" | "year" | "all";
+type Period = "day" | "week" | "month" | "year" | "all" | "custom";
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: "day", label: "Day" },
   { value: "week", label: "Week" },
   { value: "month", label: "Month" },
   { value: "year", label: "Year" },
+  { value: "custom", label: "Custom" },
   { value: "all", label: "All time" },
 ];
 
@@ -24,9 +25,9 @@ function localISO(d: Date): string {
     .slice(0, 10);
 }
 
-/** Inclusive [start, end] date range (YYYY-MM-DD) for a period, or null for all-time. */
+/** Inclusive [start, end] date range (YYYY-MM-DD) for a period, or null for all-time/custom. */
 function periodRange(period: Period, today: string): { start: string; end: string } | null {
-  if (period === "all") return null;
+  if (period === "all" || period === "custom") return null;
   if (period === "day") return { start: today, end: today };
   const d = new Date(today + "T00:00:00");
   if (period === "week") {
@@ -78,6 +79,8 @@ export function ReportsClient({
   const today = todayISO();
   const [period, setPeriod] = useState<Period>("all");
   const [userId, setUserId] = useState<string>("all");
+  const [customFrom, setCustomFrom] = useState<string>(today);
+  const [customTo, setCustomTo] = useState<string>(today);
 
   // Unique users who have bookings, for the "user who book" filter.
   const users = useMemo(() => {
@@ -92,7 +95,14 @@ export function ReportsClient({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [bookings]);
 
-  const range = useMemo(() => periodRange(period, today), [period, today]);
+  const range = useMemo(() => {
+    if (period === "custom") {
+      const start = customFrom <= customTo ? customFrom : customTo;
+      const end = customFrom <= customTo ? customTo : customFrom;
+      return { start, end };
+    }
+    return periodRange(period, today);
+  }, [period, today, customFrom, customTo]);
 
   const filteredBookings = useMemo(
     () =>
@@ -201,6 +211,31 @@ export function ReportsClient({
           ))}
         </select>
       </div>
+
+      {period === "custom" && (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-white/60">
+            <span className="mb-1 block">From</span>
+            <input
+              type="date"
+              value={customFrom}
+              max={customTo}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="input w-full sm:w-44"
+            />
+          </label>
+          <label className="text-xs text-white/60">
+            <span className="mb-1 block">To</span>
+            <input
+              type="date"
+              value={customTo}
+              min={customFrom}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="input w-full sm:w-44"
+            />
+          </label>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total revenue" value={formatCurrency(stats.revenue, currency)} icon={DollarSign} />
