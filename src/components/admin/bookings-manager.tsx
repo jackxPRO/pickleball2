@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Search, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
+import { Search, RotateCcw, CheckCircle2, XCircle, Printer } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { bookingRepository } from "@/lib/repositories/booking.repository";
 import {
@@ -33,9 +33,11 @@ const STATUSES: (BookingStatus | "ALL")[] = [
 export function BookingsManager({
   bookings,
   currency,
+  businessName = "Pickleball",
 }: {
   bookings: Booking[];
   currency: string;
+  businessName?: string;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -97,6 +99,38 @@ export function BookingsManager({
     } finally {
       setBusy(null);
     }
+  }
+
+  function printReceipt(b: Booking) {
+    const w = window.open("", "_blank", "width=380,height=560");
+    if (!w) return;
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${b.booking_code}</title>
+      <style>
+        body{font-family:system-ui,sans-serif;padding:24px;color:#111}
+        h1{font-size:18px;margin:0 0 4px}
+        .muted{color:#666;font-size:12px}
+        hr{border:none;border-top:1px dashed #ccc;margin:16px 0}
+        .row{display:flex;justify-content:space-between;font-size:13px;margin:6px 0}
+        .total{font-weight:700;font-size:16px}
+        .code{font-family:monospace}
+      </style></head><body>
+      <h1>${businessName}</h1>
+      <p class="muted">Booking receipt</p>
+      <hr/>
+      <div class="row"><span>Code</span><span class="code">${b.booking_code}</span></div>
+      <div class="row"><span>Customer</span><span>${b.users?.full_name ?? b.users?.email ?? "\u2014"}</span></div>
+      <div class="row"><span>Court</span><span>${b.courts?.name ?? "\u2014"}</span></div>
+      <div class="row"><span>Date</span><span>${formatDate(b.booking_date)}</span></div>
+      <div class="row"><span>Time</span><span>${formatTime(b.start_time)} \u2013 ${formatTime(b.end_time)}</span></div>
+      <div class="row"><span>Status</span><span>${b.booking_status}</span></div>
+      <hr/>
+      <div class="row total"><span>Total</span><span>${formatCurrency(Number(b.amount), currency)}</span></div>
+      <hr/>
+      <p class="muted">Thank you for playing with us!</p>
+      </body></html>`);
+    w.document.close();
+    w.focus();
+    w.print();
   }
 
   return (
@@ -171,6 +205,13 @@ export function BookingsManager({
                   </td>
                   <td className="p-4">
                     <div className="flex justify-end gap-1">
+                      <button
+                        title="Print receipt"
+                        onClick={() => printReceipt(b)}
+                        className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </button>
                       {b.booking_status === "CONFIRMED" && (
                         <>
                           <button

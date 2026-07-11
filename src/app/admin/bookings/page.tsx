@@ -22,6 +22,7 @@ export default async function AdminBookingsPage() {
       <BookingsManager
         bookings={bookings}
         currency={settings?.currency ?? "PHP"}
+        businessName={settings?.business_name ?? "Pickleball"}
       />
     </div>
   );
