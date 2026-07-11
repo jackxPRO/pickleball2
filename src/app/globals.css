@@ -118,3 +118,57 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-white/20;
 }
+
+/* ---- Print / PDF export -------------------------------------------------- */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* Hide chrome that shouldn't appear in printed reports. */
+  .no-print,
+  aside,
+  nav,
+  header {
+    display: none !important;
+  }
+  /* Expand the printable report to full width. */
+  .print-area {
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .print-area .card,
+  .print-area .glass {
+    border: 1px solid #e5e7eb !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Force readable text on white paper. */
+  .print-area,
+  .print-area * {
+    color: #111827 !important;
+  }
+  .print-area .text-white,
+  .print-area .text-white\/60,
+  .print-area .text-white\/70,
+  .print-area .text-white\/50,
+  .print-area .text-white\/40 {
+    color: #111827 !important;
+  }
+  /* Preserve chart & badge colors when printing. */
+  .print-area svg,
+  .print-area svg * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-area svg text {
+    fill: #374151 !important;
+  }
+  @page {
+    margin: 14mm;
+  }
+}
