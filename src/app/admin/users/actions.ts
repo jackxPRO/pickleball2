@@ -5,8 +5,30 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/utils";
+import { bookingRepository } from "@/lib/repositories/booking.repository";
+import type { Booking } from "@/types/database";
 
 export type ActionResult = { ok: boolean; error?: string };
+
+/**
+ * Fetch all bookings for a given customer. Admin only.
+ */
+export async function getUserBookingsAction(
+  userId: string
+): Promise<{ ok: boolean; error?: string; bookings?: Booking[] }> {
+  const caller = await getCurrentAdmin();
+  if (!caller) {
+    return { ok: false, error: "Admin privileges required." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const bookings = await bookingRepository.listForUser(supabase, userId);
+    return { ok: true, bookings };
+  } catch (e) {
+    return { ok: false, error: getErrorMessage(e) };
+  }
+}
 
 /**
  * Permanently delete a customer account. Admin only.

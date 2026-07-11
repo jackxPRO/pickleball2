@@ -3,19 +3,35 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Search, Wallet, Ban, CheckCircle2, Trash2 } from "lucide-react";
+import {
+  Search,
+  Wallet,
+  Ban,
+  CheckCircle2,
+  Trash2,
+  CalendarDays,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { userRepository } from "@/lib/repositories/user.repository";
 import { walletRepository } from "@/lib/repositories/wallet.repository";
-import { formatCurrency, formatDate, getErrorMessage } from "@/lib/utils";
-import type { AppUser } from "@/types/database";
+import {
+  formatCurrency,
+  formatDate,
+  formatTime,
+  getErrorMessage,
+} from "@/lib/utils";
+import { BOOKING_STATUS_STYLES } from "@/lib/constants";
+import type { AppUser, Booking } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input, Textarea } from "@/components/ui/input";
-import { deleteUserAction } from "@/app/admin/users/actions";
+import {
+  deleteUserAction,
+  getUserBookingsAction,
+} from "@/app/admin/users/actions";
 
 export function UsersManager({
   users,
@@ -33,6 +49,9 @@ export function UsersManager({
   const [search, setSearch] = useState("");
   const [adjust, setAdjust] = useState<AppUser | null>(null);
   const [removeTarget, setRemoveTarget] = useState<AppUser | null>(null);
+  const [bookingsUser, setBookingsUser] = useState<AppUser | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -113,6 +132,24 @@ export function UsersManager({
     }
   }
 
+  async function openBookings(u: AppUser) {
+    setBookingsUser(u);
+    setBookings([]);
+    setBookingsLoading(true);
+    try {
+      const res = await getUserBookingsAction(u.id);
+      if (!res.ok) {
+        toast.error(res.error ?? "Failed to load bookings");
+        return;
+      }
+      setBookings(res.bookings ?? []);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    } finally {
+      setBookingsLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="relative w-full sm:max-w-sm">
@@ -175,6 +212,13 @@ export function UsersManager({
                   <td className="p-4">
                     <div className="flex justify-end gap-1">
                       <button
+                        title="View bookings"
+                        onClick={() => openBookings(u)}
+                        className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                      </button>
+                      <button
                         title="Adjust wallet"
                         onClick={() => setAdjust(u)}
                         className="rounded-lg p-1.5 text-secondary hover:bg-secondary/10"
@@ -215,6 +259,54 @@ export function UsersManager({
           </table>
         </Card>
       )}
+
+      <Modal
+        open={!!bookingsUser}
+        onClose={() => setBookingsUser(null)}
+        title={`Bookings — ${bookingsUser?.full_name || bookingsUser?.email || ""}`}
+      >
+        {bookingsLoading ? (
+          <p className="py-8 text-center text-sm text-white/60">
+            Loading bookings…
+          </p>
+        ) : bookings.length === 0 ? (
+          <EmptyState title="No bookings yet" />
+        ) : (
+          <div className="max-h-[60vh] space-y-2 overflow-y-auto">
+            {bookings.map((b) => (
+              <div
+                key={b.id}
+                className="rounded-xl border border-white/10 bg-white/5 p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-white">
+                      {b.courts?.name || "Court"}
+                    </p>
+                    <p className="text-sm text-white/70">
+                      {formatDate(b.booking_date)}
+                    </p>
+                    <p className="text-xs text-white/40">
+                      {formatTime(b.start_time)}–{formatTime(b.end_time)}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge className={BOOKING_STATUS_STYLES[b.booking_status]}>
+                      {b.booking_status}
+                    </Badge>
+                    <span className="text-sm font-semibold gold-text">
+                      {formatCurrency(b.amount, currency)}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-1 font-mono text-[10px] text-white/30">
+                  {b.booking_code}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={!!adjust}
